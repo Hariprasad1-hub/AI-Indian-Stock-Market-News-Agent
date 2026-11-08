@@ -1,0 +1,34 @@
+# Operating System Files
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Local Backups & Raw Unsanitized Files
+My workflow.json
+*.bak
+*.backup
+Screenshot *.png
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+token.json
+
+# Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+temp/
+*.tmp
+
+# Editor & IDE Directories
+.vscode/
+.idea/
+*.swp
+*.swo

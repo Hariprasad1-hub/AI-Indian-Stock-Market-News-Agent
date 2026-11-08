@@ -1,0 +1,362 @@
+{
+  "name": "AI Indian Stock Market News Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "1bc468ab-e230-4d40-901a-176a694f4171",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.bseindia.com/data/xml/announcements.aspx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        -128
+      ],
+      "id": "aef57ae3-1f88-4fc7-9839-971f56b42cd3",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "url": "https://www.bseindia.com/Data/XML/FinancialResultsFeed.aspx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        32
+      ],
+      "id": "a5176cea-8a30-49c8-96f8-65ba950825f8",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "url": "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "c99088e6-b33b-457a-b502-07a959d4cb3b",
+      "name": "RSS Read2"
+    },
+    {
+      "parameters": {
+        "url": "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        288
+      ],
+      "id": "4ba744d5-f322-425d-9292-3f4fa8ac966a",
+      "name": "RSS Read3"
+    },
+    {
+      "parameters": {
+        "maxItems": 25
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -128
+      ],
+      "id": "e8bec4d8-2c42-47c4-99ed-71009275527b",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "maxItems": 25
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        352,
+        32
+      ],
+      "id": "7fb09043-8330-43f4-8cc8-96aa2049d81a",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "maxItems": 25
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        224,
+        160
+      ],
+      "id": "883f0a1c-27db-4b15-851f-fec9c1d0710e",
+      "name": "Limit2"
+    },
+    {
+      "parameters": {
+        "maxItems": 25
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        176,
+        288
+      ],
+      "id": "f79a057b-9f52-4cfe-8b4d-c2266880e556",
+      "name": "Limit3"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "e2f488c4-9c83-4e84-8a92-e2e5d2461fe6",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "sendTo": "your-email@example.com",
+        "subject": "Daily Stock Market NEWS",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        -48
+      ],
+      "id": "303b685a-f006-4f7a-982a-02440422fa81",
+      "name": "Send a message",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert Indian stock market news analyst.\n\nYour task is to analyze the latest stock market news provided below and create a concise, informative daily stock market briefing.\n\nNEWS DATA:\n{{ JSON.stringify($json.data) }}\n\nINSTRUCTIONS:\n\n1. Read all the news articles provided.\n2. Identify the most important developments affecting the Indian stock market.\n3. Summarize each important news item in simple, professional language.\n4. Include company names, stock names, percentages, figures and dates whenever available.\n5. Identify whether each development is potentially positive, negative or neutral for the relevant company or sector.\n6. Explain why the news matters to investors.\n7. Identify important developments involving NIFTY 50, SENSEX, NSE, BSE and major sectors when available.\n8. Remove duplicate or repetitive news.\n9. Do not invent stock prices, financial figures, company announcements or predictions.\n10. If the available information is insufficient, explicitly mention that.\n11. Include the original article links for every summarized story.\n\nOUTPUT FORMAT:\n\nDAILY INDIAN STOCK MARKET NEWS BRIEFING\n\n1. TOP 5 IMPORTANT HEADLINES\nFor each:\n- Headline\n- Company/sector\n- Summary\n- Market impact: Positive / Negative / Neutral\n- Why it matters\n- Original source link\n\n2. SECTOR-WISE DEVELOPMENTS\nSummarize important developments in Banking, IT, Pharma, Automobile, Energy and other relevant sectors.\n\n3. MARKET SENTIMENT\nGive an overall Bullish / Bearish / Neutral assessment based only on the supplied evidence. Explain the reasoning.\n\n4. IMPORTANT STOCKS TO WATCH\nMention stocks receiving significant attention in the supplied news and explain why. Do not give personalized investment advice.\n\n5. FINAL TAKEAWAY\nGive a short summary of the day's most important developments.\n\nIMPORTANT:\nOnly use the supplied news data. Do not fabricate information. Distinguish reported facts from interpretations.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        896,
+        -48
+      ],
+      "id": "2b2f53b3-3a22-42e7-a921-5ac361d1fde5",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        160
+      ],
+      "id": "6193e130-b8b8-481a-825b-0208e1e8da14",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "RSS Read3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read2": {
+      "main": [
+        [
+          {
+            "node": "Limit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read3": {
+      "main": [
+        [
+          {
+            "node": "Limit3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
