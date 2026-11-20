@@ -32,3 +32,33 @@ temp/
 .idea/
 *.swp
 *.swo
+
+# Python virtual environments and cache
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node.js dependencies and build output
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# All environment files and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+token.json
+
+# Local databases and database backups
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Local application data
+uploads/
