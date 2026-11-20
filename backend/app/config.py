@@ -1,49 +1,83 @@
-import os
-from pathlib import Path
-from typing import Optional
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Compute repository root directory
+"""Application configuration for TRADEMIND AI."""
+
+from pathlib import Path
+from typing import Annotated
+
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SQLITE_PATH = (PROJECT_ROOT / "trademind.db").as_posix()
-DEFAULT_DB_URL = f"sqlite+aiosqlite:///{DEFAULT_SQLITE_PATH}"
+DEFAULT_SQLITE_URL = f"sqlite+aiosqlite:///{DEFAULT_SQLITE_PATH}"
+
 
 class Settings(BaseSettings):
-    """Application configuration loaded from environment variables or .env file."""
     PROJECT_NAME: str = "TRADEMIND AI"
     API_V1_STR: str = "/api"
-    # Use async driver URLs. SQLite uses aiosqlite; PostgreSQL uses asyncpg.
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL",
-        DEFAULT_DB_URL,
+
+    DATABASE_URL: str = DEFAULT_SQLITE_URL
+
+    ALLOWED_ORIGINS: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: [
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+        ]
     )
-    # CORS origins – configurable via ALLOWED_ORIGINS env var (comma-separated)
-    ALLOWED_ORIGINS: list[str] = [
-        origin.strip()
-        for origin in os.getenv(
-            "ALLOWED_ORIGINS",
-            "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
-        ).split(",")
-        if origin.strip()
-    ]
 
-    # Webhook Secret for n8n integration
-    WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "trademind-n8n-secret-key-2026")
+    WEBHOOK_SECRET: str | None = None
 
-    # Risk Management Engine Parameters
-    MAX_POSITION_PCT: float = 0.20 # Max 20% portfolio value in single stock
-    MAX_SECTOR_PCT: float = 0.35   # Max 35% portfolio value in single sector
-    PRICE_MAX_STALENESS_MINUTES: int = 15 # Reject quotes older than 15 mins
-    MAX_DAILY_LOSS_PCT: float = 0.05 # Max 5% daily loss protection
-    TRANSACTION_FEE_PCT: float = 0.001 # 0.1% transaction fee
-    DUPLICATE_PROPOSAL_WINDOW_MINUTES: int = 5 # 5-min correlation deduplication
+    MAX_POSITION_PCT: float = 0.20
+    MAX_SECTOR_PCT: float = 0.35
+    PRICE_MAX_STALENESS_MINUTES: int = 15
+    MAX_DAILY_LOSS_PCT: float = 0.05
+    TRANSACTION_FEE_PCT: float = 0.001
+    DUPLICATE_PROPOSAL_WINDOW_MINUTES: int = 5
 
-    # Optional Sponsor Platform API Keys (None = unconfigured/not connected)
-    BAND_API_KEY: Optional[str] = os.getenv("BAND_API_KEY", None)
-    LYZR_API_KEY: Optional[str] = os.getenv("LYZR_API_KEY", None)
-    FINCH_API_KEY: Optional[str] = os.getenv("FINCH_API_KEY", None)
-    GEMINI_API_KEY: Optional[str] = os.getenv("GEMINI_API_KEY", None)
+    BAND_API_KEY: str | None = None
+    LYZR_API_KEY: str | None = None
+    FINCH_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=PROJECT_ROOT / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value):
+        url = str(value).strip()
+
+        if url.startswith("postgres://"):
+            return "postgresql+asyncpg://" + url[len("postgres://"):]
+
+        if url.startswith("postgresql://"):
+            return "postgresql+asyncpg://" + url[len("postgresql://"):]
+
+        return url
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value):
+        if isinstance(value, str):
+            return [
+                origin.strip()
+                for origin in value.split(",")
+                if origin.strip()
+            ]
+
+        if isinstance(value, (list, tuple)):
+            return [
+                str(origin).strip()
+                for origin in value
+                if str(origin).strip()
+            ]
+
+        return value
+
 
 settings = Settings()
